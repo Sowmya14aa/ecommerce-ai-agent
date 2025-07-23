@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-commerce AI Agent</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chat-bubble {
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col h-[80vh]">
+        <!-- Header -->
+        <div class="p-4 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-800 text-center">E-commerce Data Agent</h1>
+            <p class="text-sm text-gray-500 text-center">Ask me anything about your sales and advertising data!</p>
+        </div>
+
+        <!-- Chat Area -->
+        <div id="chat-area" class="flex-1 p-6 overflow-y-auto space-y-4">
+            <!-- Initial Greeting -->
+            <div class="flex justify-start">
+                <div class="bg-gray-200 text-gray-800 p-3 rounded-lg chat-bubble">
+                    <p>Hello! How can I help you today? Try asking: "What were the total sales?"</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 border-t border-gray-200">
+            <form id="question-form" class="flex items-center space-x-3">
+                <input type="text" id="question-input" placeholder="Type your question here..."
+                    class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                <button type="submit"
+                    class="bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition shadow-md">
+                    Ask
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('question-form');
+        const input = document.getElementById('question-input');
+        const chatArea = document.getElementById('chat-area');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const question = input.value.trim();
+            if (!question) return;
+
+            // Display user's question
+            appendMessage(question, 'user');
+            input.value = '';
+
+            // Show loading indicator
+            const loadingBubble = appendMessage('...', 'agent', true);
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: question })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Update agent's bubble with the real answer
+                loadingBubble.querySelector('p').innerText = data.answer || "Sorry, I couldn't find an answer.";
+
+            } catch (error) {
+                console.error("Error asking question:", error);
+                loadingBubble.querySelector('p').innerText = "Sorry, something went wrong. Please check the server logs.";
+            }
+        });
+
+        function appendMessage(text, sender, isLoading = false) {
+            const messageWrapper = document.createElement('div');
+            const messageBubble = document.createElement('div');
+            const paragraph = document.createElement('p');
+
+            messageWrapper.classList.add('flex');
+            messageBubble.classList.add('p-3', 'rounded-lg', 'chat-bubble');
+
+            if (sender === 'user') {
+                messageWrapper.classList.add('justify-end');
+                messageBubble.classList.add('bg-blue-600', 'text-white');
+            } else {
+                messageWrapper.classList.add('justify-start');
+                messageBubble.classList.add('bg-gray-200', 'text-gray-800');
+            }
+
+            if (isLoading) {
+                paragraph.innerHTML = '<span class="animate-pulse">Thinking...</span>';
+            } else {
+                paragraph.innerText = text;
+            }
+
+            messageBubble.appendChild(paragraph);
+            messageWrapper.appendChild(messageBubble);
+            chatArea.appendChild(messageWrapper);
+
+            // Scroll to the bottom
+            chatArea.scrollTop = chatArea.scrollHeight;
+            return messageBubble;
+        }
+    </script>
+
+</body>
+
+</html>

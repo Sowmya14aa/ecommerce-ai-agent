@@ -1,0 +1,6 @@
+Flask
+langchain
+langchain_community
+SQLAlchemy
+pandas
+matplotlib
